@@ -1,14 +1,32 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { useState } from "react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import ItemList from "./item-list";
 import NewItem from "./NewItem";
-import itemsData from "./items.json";
 import MealIdeas from "./meal-ideas";
-import { useUserAuth } from "../_utils/auth-context";
+import { useUserAuth } from "./auth-context";
+import { getItems, addItems } from "../_services/shopping-list-services.js";
 
 export default function Page() {
   const { user } = useUserAuth();
+
+  const loadItems = async () => {
+    const fetchedItems = await getItems(user.uid);
+    setItems(fetchedItems);
+  };
+
+  useEffect(() => {
+    loadItems();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user, router]);
 
   const [items, setItems] = useState(itemsData);
   const [selectedItemName, setSelectedItemName] = useState("");
@@ -18,8 +36,10 @@ export default function Page() {
     return null;
   }
 
-  const handleAddItem = (newItem) => {
-    setItems((prevItems) => [...prevItems, newItem]);
+  const handleAddItem = async (newItem) => {
+    const itemId = await addItem(user.uid, newItem);
+
+    setItems((prevItems) => [...prevItems, { id: itemId, data: newItem }]);
   };
 
   //used CHAT gpt to help clean the name.
